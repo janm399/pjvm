@@ -1,0 +1,75 @@
+<html>
+<head>
+    <title>Polyglot Java</title>
+    <script type="text/javascript" src="jquery-1.7.2.js"></script>
+    <script type="text/javascript" src="jquery.dataTables.js"></script>
+    <style type="text/css" title="currentStyle">
+        @import "jquery.dataTables.css";
+    </style>
+</head>
+<body>
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="users">
+    <thead>
+    <tr>
+        <th width="15%">Id</th>
+        <th width="25%">Username</th>
+        <th width="30%">First name</th>
+        <th width="30%">Last name</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+
+<a id="generate" href="#">More!</a>&nbsp;<a id="refresh" href="#">Refresh!</a>&nbsp;<a id="import" href="#">Import!</a>
+
+<div id="status">Ready</div>
+</body>
+<script type="text/javascript">
+    $(document).ready(function () {
+        (function () {
+            countUsers();
+            setTimeout(arguments.callee, 5000);
+        })();
+
+        var url = "http://localhost:8080/";
+
+        var table = $('#users').dataTable({
+            "bProcessing":true,
+            "bServerSide":true,
+            "bPaginate":false,
+            "bLengthChange":false,
+            "bFilter":false,
+            "bSort":false,
+            "bInfo":false,
+            "bAutoWidth":false,
+            "sAjaxSource":url + 'user/list',
+            "aoColumns":[
+                { "mDataProp":"id" },
+                { "mDataProp":"username" },
+                { "mDataProp":"firstName" },
+                { "mDataProp":"lastName" }
+            ]
+        });
+
+        function refresh() {
+            table.fnDraw();
+        }
+
+        $("#generate").bind("click", function () { $.ajax({ type:'POST', url:url + 'user/generate', success:function () { setTimeout(refresh, 1000); } }); });
+        $("#refresh").bind("click", function () { refresh(); });
+        $("#import").bind("click", function() { $.ajax({type:'POST', url:url + 'user/import', success:function () { setTimeout(refresh, 1000); } }); });
+
+        function countUsers() {
+            $.ajax({
+                url:url + 'user/count',
+                success:function (data) {
+                    $("#status").html("Managing " + data + " users.");
+                }
+            });
+        }
+
+    });
+</script>
+</html>
