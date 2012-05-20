@@ -48,7 +48,7 @@ class SprayCanBoot(system: ActorSystem) {
 
   val rootService = system.actorOf(
     props = Props(new SprayCanRootService(
-      system.actorOf(Props(new HttpService(userModule.userService)))
+      system.actorOf(Props(new HttpService(userModule.svc)))
     )),
     name = "root-service"
   )
