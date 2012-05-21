@@ -9,13 +9,21 @@ import au.id.jazzy.scalaflect.ScalaFlect
 import cc.spray.directives.{SprayRoute1, LongNumber}
 import cc.spray._
 import typeconversion._
+import scalaz.Kleisli
+import java.util.Date
 
 case class UserSearch(name: Option[String], age: Int)
 
 trait UserService extends Directives with DefaultMarshallers with CustomMarshallers {
   implicit val timeout = Timeout(10000)
 
-  class CaseClassParameterMatcher[A <: AnyRef : ClassManifest, R1](f1: A => R1) extends Deserializer[Map[String, String], A] {
+  // Observable[A] = Kleisli[PR, Date, A]
+  type PR[A] = A
+  type Observable[A] = Kleisli[PR, Date, A]
+
+  type CPM[A] = Deserializer[Map[String, String], A]
+
+  class CaseClassParameterMatcher[A <: AnyRef : ClassManifest, R1](f1: A => R1) extends CPM[A] {
     override def apply(params: Map[String, String]) = {
       val clazz = classManifest[A].erasure.asInstanceOf[Class[A]]
       val sf = new ScalaFlect[A](clazz)
@@ -28,7 +36,7 @@ trait UserService extends Directives with DefaultMarshallers with CustomMarshall
     }
   }
 
-  def cc[A](pm: Deserializer[Map[String, String], A]): SprayRoute1[A] = filter1[A] { ctx =>
+  def cc[A](pm: CPM[A]): SprayRoute1[A] = filter1[A] { ctx =>
     pm(ctx.request.queryParams) match {
       case Right(value) => Pass.withTransform(value) {
         _.cancelRejections {
